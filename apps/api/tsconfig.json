@@ -7,10 +7,16 @@
     "target": "ES2021",
     "lib": ["ES2021"],
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "noEmit": true,
     "skipLibCheck": true,
     "strict": true,
     "resolveJsonModule": true,
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "strictPropertyInitialization": false,
+    "allowImportingTsExtensions": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

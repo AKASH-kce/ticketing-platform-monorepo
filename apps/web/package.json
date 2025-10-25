@@ -17,7 +17,9 @@
     "postcss": "^8.5.6",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "tailwindcss": "^4.1.14"
+    "tailwindcss": "^4.1.14",
+    "lucide-react": "^0.468.0",
+    "date-fns": "^4.1.0"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

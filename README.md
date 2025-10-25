@@ -1,257 +1,328 @@
-# Assignment Requirements
+# TicketFlow - Dynamic Event Ticketing Platform
 
-- Duration: 7 days from receipt
-- Stack: Next.js 15, NestJS/ExpressJS, Turborepo, Drizzle ORM, PostgreSQL
+A full-stack event ticketing platform with intelligent dynamic pricing that adjusts based on time until event, booking velocity, and remaining inventory.
 
-**NOTE:** You are free to fork this repository, complete the assignment in your own fork, and **retain full ownership of your code**. Please just add me as a collaborator during the evaluation process so I can review your submission.
+## 🚀 Features
 
-## What You're Building
+- **Dynamic Pricing Engine**: Prices automatically adjust based on:
+  - Time until event (early bird discounts, last-minute premiums)
+  - Booking velocity (popular events cost more)
+  - Remaining inventory (scarcity drives prices up)
+- **Concurrency Control**: Prevents overselling with database-level locking
+- **Real-time Pricing**: Live price updates and breakdowns
+- **Modern Tech Stack**: Next.js 15, NestJS, Drizzle ORM, PostgreSQL
+- **Comprehensive Testing**: Unit tests, integration tests, and concurrency tests
 
-A full-stack event ticketing platform with dynamic pricing. Ticket prices automatically adjust based on time until event, booking velocity, and remaining inventory.
+## 🏗️ Architecture
 
-## Technical Stack
+This is a Turborepo monorepo with the following structure:
 
-**Required:**
-
-- Monorepo: Turborepo (already configured)
-- Frontend: Next.js 15 with App Router (starter provided)
-- Backend: NestJS or Express (your choice)
-- Database: PostgreSQL with Drizzle ORM
-- Language: TypeScript strict mode
-
-**Optional (bonus points):**
-
-- Redis for caching
-- Docker Compose for easy local setup
-
-## Core Requirements
-
-**1. Database Schema**
-
-Design and implement schema for events and bookings.
-
-**Event must include:**
-
-- Basic info: name, date, venue, description
-- Capacity: total tickets, booked tickets
-- Pricing: base price, current price, floor, ceiling
-- Pricing rules configuration (stored as JSON)
-
-**Booking must include:**
-
-- Reference to event
-- User email
-- Quantity
-- Price paid (snapshot at booking time)
-- Booking timestamp
-
-The database package is set up with Drizzle. You need to:
-
-- Create `src/schema.ts` with your table definitions
-- Create `src/index.ts` to export the database client
-- Create `src/seed.ts` to populate sample data
-
-**2. Dynamic Pricing Engine**
-
-This is the core challenge. Implement logic that calculates ticket price based on three rules:
-
-**Time-Based Rule**
-
-Price increases as event date approaches.
-
-Example: Base price for events 30+ days out, +20% for events within 7 days, +50% for events tomorrow.
-
-**Demand-Based Rule**
-
-Price increases when booking velocity is high.
-
-Example: If more than 10 bookings happened in the last hour, increase price by 15%.
-
-**Inventory-Based Rule**
-
-Price increases as tickets sell out.
-
-Example: When less than 20% of tickets remain, increase price by 25%.
-
-**Implementation requirements:**
-
-- Each rule has a configurable weight (via environment variables)
-- Rules combine to produce final price
-- Price must respect floor (minimum) and ceiling (maximum)
-- Price calculation must be deterministic and testable
-- Formula: currentPrice = basePrice × (1 + sum of weighted adjustments)
-
-**3. API Endpoints**
-
-Build a REST API with these endpoints:
-
-**Events**
-
-- `GET /events` - List all events with current price and availability
-- `GET /events/:id` - Get single event details with price breakdown
-- `POST /events` - Create new event (simple auth is fine)
-
-**Bookings**
-
-- `POST /bookings` - Book tickets (body: eventId, userEmail, quantity)
-- `GET /bookings?eventId=:id` - List bookings for an event
-
-**Analytics**
-
-- `GET /analytics/events/:id` - Get metrics for an event (total sold, revenue, average price, remaining)
-- `GET /analytics/summary` - System-wide metrics
-
-**Development**
-
-- `POST /seed` - Seed database with sample events
-
-**4. Concurrency Control**
-
-**Critical requirement:** Prevent overselling when multiple users book simultaneously.
-When only 1 ticket remains and 2 users try to book at the same time:
-
-- Only 1 booking should succeed
-- The other should receive a clear error
-- No tickets should be oversold
-
-You must:
-
-- Implement proper transaction handling with row-level locking
-- Write an automated test that proves this works
-
-Example test structure:
-
-```ts
-typescriptdescribe("Concurrent Bookings", () => {
-  it("prevents overbooking of last ticket", async () => {
-    // Setup: Create event with 1 ticket remaining
-    // Execute: Make 2 simultaneous booking requests
-    // Assert: Exactly 1 succeeds, 1 fails with proper error
-  });
-});
+```
+ticketing-platform-monorepo/
+├── apps/
+│   ├── api/                 # NestJS API server
+│   └── web/                 # Next.js 15 frontend
+├── packages/
+│   ├── database/            # Drizzle ORM schema and client
+│   ├── pricing-engine/      # Dynamic pricing logic
+│   ├── ui/                  # Shared UI components
+│   ├── eslint-config/       # Shared ESLint configuration
+│   └── typescript-config/   # Shared TypeScript configuration
 ```
 
-**5. Frontend Pages**
+## 🛠️ Tech Stack
 
-Build these pages using Next.js App Router:
+### Backend
+- **NestJS** - Scalable Node.js framework
+- **PostgreSQL** - Primary database
+- **Drizzle ORM** - Type-safe database queries
+- **TypeScript** - Type safety and developer experience
 
-**Event List (`/events`)**
+### Frontend
+- **Next.js 15** - React framework with App Router
+- **Tailwind CSS** - Utility-first CSS framework
+- **Lucide React** - Beautiful icons
+- **date-fns** - Date manipulation
 
-- Display all upcoming events
-- Show name, date, venue, current price, tickets remaining
-- Click event to view details
+### Development
+- **Turborepo** - Monorepo build system
+- **pnpm** - Fast package manager
+- **Vitest** - Testing framework
+- **Jest** - Additional testing for API
 
-**Event Detail (`/events/[id]`)**
+## 📋 Prerequisites
 
-- Full event information
-- Price breakdown showing base price and adjustments from each rule
-- Booking form with quantity selector
-- Real-time price updates (polling every 30 seconds is fine)
+- Node.js 18+ 
+- pnpm 8+
+- PostgreSQL 15+
+- Docker & Docker Compose (optional)
 
-**Booking Confirmation (`/bookings/success`)**
+## 🚀 Quick Start
 
-- Show booking details after successful purchase
-- Display price paid vs current price
+### 1. Clone and Install
 
-**User Bookings (`/my-bookings`)**
+```bash
+git clone <repository-url>
+cd ticketing-platform-monorepo
+pnpm install
+```
 
-- List user's bookings
-- Show event name, tickets, price paid
-- Compare price paid to current price
+### 2. Database Setup
 
-**Technical requirements:**
+#### Option A: Using Docker (Recommended)
+```bash
+docker-compose up -d postgres
+```
 
-- Use Server Components where appropriate
-- Handle form submission with Server Actions
-- Show loading states and error messages
-- Responsive design
+#### Option B: Local PostgreSQL
+Create a database named `ticketing_platform` and update the connection string in your `.env` file.
 
-**Testing Requirements**
+### 3. Environment Configuration
 
-**You must include:**
+```bash
+cp env.example .env
+```
 
-1. Unit tests for pricing calculation logic
-   - Test each rule independently
-   - Test combined rules
-   - Test floor/ceiling constraints
+Update the `.env` file with your database credentials:
 
-2. Integration tests for booking flow
+```env
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/ticketing_platform
+PORT=3001
+FRONTEND_URL=http://localhost:3000
+API_KEY=dev-api-key-123
+NEXT_PUBLIC_API_URL=http://localhost:3001
+NEXT_PUBLIC_API_KEY=dev-api-key-123
+```
 
-- Complete flow from price calculation to booking confirmation
+### 4. Database Migration and Seeding
 
-3. Concurrency test (mandatory)
+```bash
+# Generate and run migrations
+pnpm --filter @repo/database db:generate
+pnpm --filter @repo/database db:push
 
-- Automated test proving your solution prevents overbooking
+# Seed the database with sample data
+pnpm --filter @repo/database db:seed
+```
 
-Minimum 70% coverage for pricing logic.
+### 5. Start Development Servers
 
-**Deliverables**
+```bash
+# Start API server (Terminal 1)
+pnpm --filter api dev
 
-**1. GitHub Repository**
+# Start web application (Terminal 2)
+pnpm --filter web dev
+```
 
-Include:
+### 6. Access the Application
 
-- All source code
-- README.md with setup instructions
-- DESIGN.md explaining your approach
-- .env.example files
-- Working seed script
+- **Frontend**: http://localhost:3000
+- **API**: http://localhost:3001
+- **Database Studio**: `pnpm --filter @repo/database db:studio`
 
-**2. README.md**
+## 🧪 Testing
 
-Must contain:
+### Run All Tests
+```bash
+pnpm test
+```
 
-- Prerequisites (Node version, database, etc)
-- Installation steps (should work in under 5 commands)
-- How to run the application
-- How to run tests
-- Environment variables documentation
+### Run Specific Test Suites
+```bash
+# Pricing engine tests
+pnpm --filter @repo/pricing-engine test
 
-**3. DESIGN.md**
+# API tests
+pnpm --filter api test
 
-Write 300-500 words explaining:
+# E2E tests
+pnpm --filter api test:e2e
+```
 
-- Your pricing algorithm implementation and design choices
-- How you solved the concurrency problem
-- Monorepo architecture decisions
-- Trade-offs you made
-- What you would improve with more time
+### Test Coverage
+```bash
+# Pricing engine coverage
+pnpm --filter @repo/pricing-engine test:coverage
 
-**4. Working Application**
+# API coverage
+pnpm --filter api test:cov
+```
 
-We should be able to:
+## 📚 API Documentation
 
-- Clone your repo
-- Run setup commands
-- Seed the database
-- Access the working application
-- Run your tests and see them pass
+### Events
+- `GET /events` - List all upcoming events with current pricing
+- `GET /events/:id` - Get event details with pricing breakdown
+- `POST /events` - Create new event (requires API key)
 
-## What's NOT Required
+### Bookings
+- `POST /bookings` - Create a new booking
+- `GET /bookings?eventId=:id` - List bookings for an event
+- `GET /bookings/user/:email` - List user's bookings
+- `GET /bookings/:id` - Get specific booking details
 
-To keep the scope reasonable for 7 days, you do **not** need to implement:
+### Analytics
+- `GET /analytics/events/:id` - Get event analytics
+- `GET /analytics/summary` - Get system-wide metrics
 
-**Payment Processing**
+### Development
+- `POST /dev/seed` - Seed database with sample data
 
-- No Stripe/PayPal integration needed
-- No actual payment gateway
-- When a booking is created, just record the price - assume payment happened
+## 🎯 Dynamic Pricing Rules
 
-**Authentication System**
+The pricing engine applies three types of adjustments:
 
-- No user registration/login required
-- For the booking flow, just ask for email address
-- Simple admin authentication (hardcoded API key is fine) for creating events
+### 1. Time-Based Pricing
+- **30+ days**: Base price (no adjustment)
+- **7-30 days**: +20% adjustment
+- **1-7 days**: +50% adjustment
+- **< 1 day**: +50% adjustment
 
-**Email Notifications**
+### 2. Demand-Based Pricing
+- Monitors bookings in the last hour
+- If >10 bookings/hour: +15% adjustment
+- Configurable threshold and multiplier
 
-- No need to send booking confirmations
-- No email service integration
+### 3. Inventory-Based Pricing
+- Tracks remaining ticket percentage
+- If <20% remaining: +25% adjustment
+- Configurable threshold and multiplier
 
-**Advanced Features**
+### Final Price Calculation
+```
+currentPrice = basePrice × (1 + weightedAdjustments)
+```
 
-- No refunds or cancellation flow
-- No QR codes or ticket PDFs
-- No seat selection or ticket tiers
+Where weighted adjustments are:
+- Time-based: 40% weight
+- Demand-based: 30% weight  
+- Inventory-based: 30% weight
 
-Focus on the core challenges: dynamic pricing algorithm and concurrency control. Everything else should be kept minimal.
+## 🔒 Concurrency Control
+
+The system prevents overselling through:
+
+1. **Database Transactions**: All booking operations are atomic
+2. **Row-Level Locking**: Events are locked during booking
+3. **Inventory Validation**: Real-time availability checks
+4. **Automated Testing**: Concurrency tests verify no overselling
+
+## 🏃‍♂️ Development Commands
+
+```bash
+# Install dependencies
+pnpm install
+
+# Build all packages
+pnpm build
+
+# Run linting
+pnpm lint
+
+# Type checking
+pnpm type-check
+
+# Clean all build artifacts
+pnpm clean
+
+# Run specific package commands
+pnpm --filter <package-name> <command>
+```
+
+## 📁 Project Structure
+
+```
+apps/
+├── api/                     # NestJS API
+│   ├── src/
+│   │   ├── events/         # Event management
+│   │   ├── bookings/       # Booking system
+│   │   ├── analytics/      # Analytics endpoints
+│   │   ├── development/    # Dev utilities
+│   │   └── database/       # Database service
+│   └── test/               # E2E tests
+└── web/                    # Next.js frontend
+    ├── app/
+    │   ├── events/         # Event pages
+    │   ├── bookings/       # Booking pages
+    │   └── my-bookings/    # User bookings
+    └── src/
+        ├── lib/            # API client
+        └── types/          # TypeScript types
+
+packages/
+├── database/               # Drizzle ORM
+│   ├── src/
+│   │   ├── schema.ts      # Database schema
+│   │   ├── index.ts       # Database client
+│   │   └── seed.ts        # Sample data
+├── pricing-engine/         # Dynamic pricing
+│   ├── src/
+│   │   ├── pricing-engine.ts
+│   │   ├── types.ts
+│   │   └── pricing-engine.test.ts
+└── ui/                     # Shared components
+```
+
+## 🚀 Deployment
+
+### Environment Variables
+Ensure all required environment variables are set in production:
+
+- `DATABASE_URL` - PostgreSQL connection string
+- `PORT` - API server port
+- `FRONTEND_URL` - Frontend URL for CORS
+- `API_KEY` - API authentication key
+- `NEXT_PUBLIC_API_URL` - Public API URL
+- `NEXT_PUBLIC_API_KEY` - Public API key
+
+### Build for Production
+```bash
+# Build all packages
+pnpm build
+
+# Start production servers
+pnpm --filter api start
+pnpm --filter web start
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Ensure all tests pass
+6. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+## 🆘 Troubleshooting
+
+### Common Issues
+
+**Database Connection Error**
+- Ensure PostgreSQL is running
+- Check DATABASE_URL in .env file
+- Verify database exists
+
+**Port Already in Use**
+- Change PORT in .env file
+- Kill existing processes on ports 3000/3001
+
+**Migration Errors**
+- Drop and recreate database
+- Run `pnpm --filter @repo/database db:push`
+
+**Build Errors**
+- Clear node_modules: `rm -rf node_modules && pnpm install`
+- Clear build cache: `pnpm clean`
+
+### Getting Help
+
+- Check the [Design Document](./DESIGN.md) for technical details
+- Review test files for usage examples
+- Open an issue for bugs or feature requests
